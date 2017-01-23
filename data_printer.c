@@ -95,7 +95,7 @@ void pretty_print (const unsigned long bytes_down, const unsigned long bytes_up)
 		strcpy(str_down, "");
 		strcpy(str_up, ",");
 		strcpy(str_total, ",");
-	} else {
+	} else if (!display_csv && !display_less){
 		strcpy(str_down, "Down: ");
 		strcpy(str_up, " Up: ");
 		strcpy(str_total, " Total: ");
@@ -115,18 +115,6 @@ void pretty_print (const unsigned long bytes_down, const unsigned long bytes_up)
 	printf ("\n");
 }
 
-void get_current_data_file (char *buffer){
-	time_t t = time(NULL);				// get current time
-	struct tm tm = *localtime(&t);		// get localtime struct
-	char log_name_format[16];			// buffer for holding log file name
-
-	// format log file name
-	sprintf(log_name_format, "%d-%d.log", tm.tm_year + 1900, tm.tm_mon + 1);
-
-	// format log data location
-	sprintf(buffer, "%s%s", LOG_LOCATION, log_name_format);
-}
-
 void display_help (){
 	fprintf (stderr, "Usage: %s [%s]...\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n "
 		, PROGRAM_NAME, "OPTIONS"
@@ -141,8 +129,6 @@ void display_help (){
 }
 
 int main (int argc, char **argv){
-	get_current_data_file(read_location);
-
 	if (argc == 1){
 		fprintf(stderr, "%s\n", "Parameter -p is mandatory. Use --help for more information.");
 		return 0;
