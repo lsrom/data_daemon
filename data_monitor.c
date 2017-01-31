@@ -4,6 +4,30 @@
 char log_data_file[255];	// path to log file
 int gmt_offset = 0;
 
+#ifdef DEBUG
+
+#define KILOBYTE 1024
+#define MEGABYTE (1024 * KILOBYTE)
+#define GIGABYTE (1024 * MEGABYTE)
+
+void printMi (unsigned long bytes, char *buffer){
+	char *units[] = {"kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+
+	unsigned long unit = KILOBYTE;
+	int u = -1;
+
+	int i = -1;
+	unsigned long tmp = 0;
+	do {
+		tmp = bytes % (unit == 1024 ? 1024 : (unit / 1024));
+		bytes = bytes / unit;
+		i++;
+	} while (bytes > unit);
+
+	sprintf (buffer, "%lu.%lu %s", bytes, tmp, units[u == -1 ? i : u]);
+}
+#endif
+
 bool starts_with (const char *str_1, const char *str_2){
 	size_t len_str_1 = strlen(str_1);
     size_t len_str_2 = strlen(str_2);
@@ -116,8 +140,10 @@ int run (const char *interface){
 
 	init(&last_bytes_down, &last_bytes_up, log_file_lines);
 
+	#ifdef DEBUG
 	int writes = 0;		// how many writes to the disk the program made
 	int rounds = 0;		// how many rounds was program active (rounds * SLEEP_INTERVAL = time duration of program run)
+	#endif
 
 	// this loop runs forever, with sleep interval defined in SLEEP_INTERVAL
 	while (true){
@@ -158,23 +184,51 @@ int run (const char *interface){
 
 				   	int lines = read_log(log_file_lines);
 
-				   	if (log_file_lines[lines - 1].timestamp == timestamp){
+				   	if (lines != 0 && log_file_lines[lines - 1].timestamp == timestamp){
+				   		#ifdef DEBUG
+				   		printf ("Same day (%ld).\n", timestamp);
+						#endif
 				   		if (delta_down >= DELTA_TRANSFER || delta_up >= DELTA_TRANSFER || (last_bytes_down == 0 || last_bytes_up == 0)){
 				   			modify_log(log_file_lines, lines, log_file_lines[lines].timestamp, delta_down + log_file_lines[lines].bytes_down, delta_up + log_file_lines[lines].bytes_up);
+				   			
+				   			#ifdef DEBUG
 				   			writes++;
+							#endif
 
 				   			// refresh last values
 				   			last_bytes_down = bytes_down;
 				   			last_bytes_up = bytes_up;
+
+				   			#ifdef DEBUG
+				   			char buffer[32];
+				   			printMi(delta_down, buffer);
+				   			printf ("Delta down: %s\n", buffer);
+				   			printMi(delta_up, buffer);
+				   			printf ("Delta up: %s\n", buffer);
+							#endif
 				   		}
 
 				   	} else {
+				   		#ifdef DEBUG
+				   		printf ("New day (%ld).\n", timestamp);
+						#endif
 				   		add_to_log(timestamp, delta_down, delta_up, lines);
+				   		
+				   		#ifdef DEBUG
 				   		writes++;
+						#endif
 
 						// refresh last values
 				   		last_bytes_down = bytes_down;
 				   		last_bytes_up = bytes_up;
+
+				   		#ifdef DEBUG
+				   		char buffer[32];
+				   		printMi(delta_down, buffer);
+				   		printf ("Delta down: %s\n", buffer);
+				   		printMi(delta_up, buffer);
+				   		printf ("Delta up: %s\n", buffer);
+						#endif
 				   	}
 				}
 			}
@@ -184,7 +238,9 @@ int run (const char *interface){
 
 		sleep(SLEEP_INTERVAL);	// wait before another cycle
 
-		rounds++;		// for debug
-		//printf ("%3d: %3d writes\n", rounds, writes);
+		#ifdef DEBUG
+		rounds++;
+		printf ("Rounds: %4d Writes: %4d\n", rounds, writes);
+		#endif
 	}
 }

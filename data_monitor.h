@@ -12,7 +12,12 @@
 /* SETTINGS */
 #define DELTA_TRANSFER 50 * MB 	// after how many bytes you want to write to log?
 #define SLEEP_INTERVAL 60		// seconds between checks of transfered data
+
+#ifdef DEBUG
+#define LOG_LOCATION "/data/git/data_daemon/test_log/"	// where to put the file with log in debug mode
+#elif
 #define LOG_LOCATION "/data/logs/data_transferred/"	// where to put the file with log
+#endif
 /* ------------------------------------------------------------------------- */
 
 /* Definitions of byte multiples. These are actually Mibi units (MiB, GiB,..) not MB, GB,.. */
