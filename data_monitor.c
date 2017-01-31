@@ -25,37 +25,39 @@ int read_log (log_line *log_file_lines){
 	}
 
 	int lines = 0;
-	while (fscanf(log, "%lu,%lu,%lu", &log_file_lines[lines].timestamp, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up) == 3) {
+	while (!feof(log)) {
+		fscanf(log, "%ld,%lu,%lu", &log_file_lines[lines].timestamp, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up);
         lines++;
     }
 
     fclose(log);
 
-    return lines - 1;
+    return lines;
 }
 
-void add_to_log (const ul_t timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines){
+void add_to_log (const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines){
 	bool same = get_current_data_file(log_data_file);
 	FILE *log = fopen (log_data_file, "a");
 
-	if (lines == 0 && same){
-		fprintf(log, "%lu,%lu,%lu", timestamp, bytes_down, bytes_up);
+	if (lines == 0){
+		fprintf(log, "%ld,%lu,%lu", timestamp, bytes_down, bytes_up);
 	} else {
-		fprintf(log, "\n%lu,%lu,%lu", timestamp, bytes_down, bytes_up);
+		fprintf(log, "\n%ld,%lu,%lu", timestamp, bytes_down, bytes_up);
 	}
 
 	fclose(log);
 }
 
-void modify_log (log_line *log_file_lines, int lines, const ul_t timestamp, const ul_t bytes_down, const ul_t bytes_up){
+void modify_log (log_line *log_file_lines, int lines, const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up){
     FILE *log = fopen(log_data_file, "w");
+
     if (lines != 0){
-    	for (int i = 0; i < lines; i++){
-    		fprintf (log, "%lu,%lu,%lu\r\n", log_file_lines[i].timestamp, log_file_lines[i].bytes_down, log_file_lines[i].bytes_up);
+    	for (int i = 0; i < (lines - 1); i++){
+    		fprintf (log, "%ld,%lu,%lu\r\n", log_file_lines[i].timestamp, log_file_lines[i].bytes_down, log_file_lines[i].bytes_up);
     	}
     }
 
-    fprintf (log, "%lu,%lu,%lu", log_file_lines[lines].timestamp, bytes_down, bytes_up);
+    fprintf (log, "%ld,%lu,%lu", log_file_lines[lines].timestamp, bytes_down, bytes_up);
 
 	fclose(log);
 }
@@ -77,6 +79,17 @@ bool get_current_data_file (char *buffer){
 	sprintf(buffer, "%s%s", LOG_LOCATION, log_name_format);
 
 	return same;
+}
+
+time_t get_timestamp (){
+	time_t current_time = time(NULL);
+	printf ("current_time %ld\n", current_time);
+	printf ("current_time MOD DAY %ld\n", current_time % DAY);
+	printf("added %ld\n", current_time + gmt_offset);
+	time_t current_date = (current_time + gmt_offset) - (current_time % DAY);
+	printf("current_date %ld\n", current_date);
+
+	return current_date;
 }
 
 void init (){
@@ -142,33 +155,32 @@ int run (const char *interface){
 				   	bytes_up = strtoul(strtok(NULL, delimeter), &ptr, 10);		// parse bytes uploaded from dev file
 
 				   	//printf ("%u %u\n", bytes_down, bytes_up);		// uncomment for printing down/up amount every round
-				   	ul_t timestamp = ((ul_t)(time(NULL) - ((time(NULL) + gmt_offset) % DAY)));
+				   	time_t timestamp = get_timestamp();
 
-				   	syslog (LOG_INFO, "Last: %lu %lu\n", last_bytes_down, last_bytes_up);
-				   	syslog (LOG_INFO, "bytes: %lu %lu\n", bytes_down, bytes_up);
 				   	// calculate difference between this and last measurement
 				   	ul_t delta_down = bytes_down - last_bytes_down;
 				   	ul_t delta_up = bytes_up - last_bytes_up;
-				   	syslog (LOG_INFO, "delta: %lu %lu\n", delta_down, delta_up);
 
-				   	// if log line with this day already exists
-				   	if (delta_down >= DELTA_TRANSFER || delta_up >= DELTA_TRANSFER || (last_bytes_down == 0 || last_bytes_up == 0)){
-				   		writes++;		// for debug
+				   	int lines = read_log(log_file_lines);
 
-				   		int lines = read_log(log_file_lines);
-				   		if (log_file_lines[lines].timestamp == timestamp){
-				   			// still the same day
+				   	if (log_file_lines[lines].timestamp == timestamp){
+				   		if (delta_down >= DELTA_TRANSFER || delta_up >= DELTA_TRANSFER || (last_bytes_down == 0 || last_bytes_up == 0)){
 				   			modify_log(log_file_lines, lines, log_file_lines[lines].timestamp, delta_down + log_file_lines[lines].bytes_down, delta_up + log_file_lines[lines].bytes_up);
-				   		} else {
-				   			// new day
-				   			add_to_log(timestamp, delta_down, delta_up, lines);
+				   			writes++;
+
+				   			// refresh last values
+				   			last_bytes_down = bytes_down;
+				   			last_bytes_up = bytes_up;
 				   		}
 
-				   		// refresh last values
+				   	} else {
+				   		add_to_log(timestamp, delta_down, delta_up, lines);
+				   		writes++;
+
+						// refresh last values
 				   		last_bytes_down = bytes_down;
 				   		last_bytes_up = bytes_up;
-			   		}
-
+				   	}
 				}
 			}
 		}

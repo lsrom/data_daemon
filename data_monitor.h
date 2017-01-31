@@ -10,9 +10,9 @@
 
 /* ------------------------------------------------------------------------- */
 /* SETTINGS */
-#define DELTA_TRANSFER 25 * MB 	// after how many bytes you want to write to log?
+#define DELTA_TRANSFER 50 * MB 	// after how many bytes you want to write to log?
 #define SLEEP_INTERVAL 60		// seconds between checks of transfered data
-#define LOG_LOCATION "/data/logs/data_transfered/"	// where to put the file with log
+#define LOG_LOCATION "/data/logs/data_transferred/"	// where to put the file with log
 /* ------------------------------------------------------------------------- */
 
 /* Definitions of byte multiples. These are actually Mibi units (MiB, GiB,..) not MB, GB,.. */
@@ -58,17 +58,23 @@ int read_log (log_line *log_file_lines);
  * regardless whether it is after midnight during the run of the program or after boot and new start of the program.
  * This means that downloaded and upload data amount will be always cunted for one calendar day.
  */
-void add_to_log (const ul_t timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines);
+void add_to_log (const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines);
 
 /**
  * Changes last line if log file. No new line is added. Is called during the day, logging changing values.
  */
-void modify_log (log_line *log_file_lines, int lines, const ul_t timestamp, const ul_t bytes_down, const ul_t bytes_up);
+void modify_log (log_line *log_file_lines, int lines, const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up);
 
 /**
  * Creates absolute location of the log file and puts it into @buffer.
  */
 bool get_current_data_file (char *buffer);
+
+
+/**
+ * TODO
+ */
+time_t get_timestamp();
 
 /**
 TODO
