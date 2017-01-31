@@ -152,7 +152,7 @@ static void daemonize (){
 int main (void){
 	start_log();
 
-	//daemonize();
+	daemonize();
 
 	syslog(LOG_INFO, "Daemon started.\n");
 

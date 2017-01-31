@@ -25,8 +25,7 @@ int read_log (log_line *log_file_lines){
 	}
 
 	int lines = 0;
-	while (!feof(log)) {
-		fscanf(log, "%ld,%lu,%lu", &log_file_lines[lines].timestamp, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up);
+	while (fscanf(log, "%ld,%lu,%lu", &log_file_lines[lines].timestamp, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up) == 3) {
         lines++;
     }
 
@@ -83,11 +82,7 @@ bool get_current_data_file (char *buffer){
 
 time_t get_timestamp (){
 	time_t current_time = time(NULL);
-	printf ("current_time %ld\n", current_time);
-	printf ("current_time MOD DAY %ld\n", current_time % DAY);
-	printf("added %ld\n", current_time + gmt_offset);
 	time_t current_date = (current_time + gmt_offset) - (current_time % DAY);
-	printf("current_date %ld\n", current_date);
 
 	return current_date;
 }
@@ -163,7 +158,7 @@ int run (const char *interface){
 
 				   	int lines = read_log(log_file_lines);
 
-				   	if (log_file_lines[lines].timestamp == timestamp){
+				   	if (log_file_lines[lines - 1].timestamp == timestamp){
 				   		if (delta_down >= DELTA_TRANSFER || delta_up >= DELTA_TRANSFER || (last_bytes_down == 0 || last_bytes_up == 0)){
 				   			modify_log(log_file_lines, lines, log_file_lines[lines].timestamp, delta_down + log_file_lines[lines].bytes_down, delta_up + log_file_lines[lines].bytes_up);
 				   			writes++;
