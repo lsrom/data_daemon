@@ -4,12 +4,6 @@
 char log_data_file[255];	// path to log file
 int gmt_offset = 0;
 
-#ifdef DEBUG
-
-#define KILOBYTE 1024
-#define MEGABYTE (1024 * KILOBYTE)
-#define GIGABYTE (1024 * MEGABYTE)
-
 void printMi (unsigned long bytes, char *buffer){
 	char *units[] = {"kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
 
@@ -26,7 +20,6 @@ void printMi (unsigned long bytes, char *buffer){
 
 	sprintf (buffer, "%lu.%lu %s", bytes, tmp, units[u == -1 ? i : u]);
 }
-#endif
 
 bool starts_with (const char *str_1, const char *str_2){
 	size_t len_str_1 = strlen(str_1);
@@ -111,6 +104,37 @@ time_t get_timestamp (){
 	return current_date;
 }
 
+void notification (const ul_t down_total, const ul_t up_total){
+	ul_t total = down_total + up_total;
+
+	char buffer[255];			// for message to the user
+	char down_buffer[32];		// for human readable amount of bytes downloaded
+	char up_buffer[32];			// for human readable amount of bytes uploaded
+	char total_buffer[32];		// for human readable amount of bytes in total
+
+	// make byte amount human readable
+	printMi(down_total, down_buffer);
+	printMi(up_total, up_buffer);
+	printMi(total, total_buffer);
+
+	// when aproaching transfer limit
+	if ((total > (TRANSFER_LIMIT - TRANSFER_WARNING)) && (notifications_displayed < NOTIFICATIONS_LIMIT) && (notifications_ran % NOTIFICATIONS_PAUSE == 0)){
+		// create shel command to show ntification and play sound effect
+		sprintf (buffer, "notify-send \"Data Limit Warning\" \"%s down, %s up\nTotal: %s\"; paplay notify_sound.wav", down_buffer, up_buffer, total_buffer);
+
+		system(buffer);					// show notification
+		notifications_displayed++;		// increment amount of notifications displayed
+	}
+
+	// if next round will be over transfer limit, set notifications_displayed to zero 
+	// because every following notification will have different count
+	if ((total + DELTA_TRANSFER) > TRANSFER_LIMIT){
+		notifications_displayed = 0;
+	}
+
+	notifications_ran++;		// increment number of times this function has ran
+}
+
 void init (){
 	// init the gmt offset for current timezone
 	time_t t = time(NULL);
@@ -182,15 +206,22 @@ int run (const char *interface){
 				   	ul_t delta_down = bytes_down - last_bytes_down;
 				   	ul_t delta_up = bytes_up - last_bytes_up;
 
+				   	ul_t down_total = 0;
+				   	ul_t up_total = 0;
+
 				   	int lines = read_log(log_file_lines);
 
 				   	if (lines != 0 && log_file_lines[lines - 1].timestamp == timestamp){
 				   		#ifdef DEBUG
 				   		printf ("Same day (%ld).\n", timestamp);
 						#endif
+
+						down_total = delta_down + log_file_lines[lines - 1].bytes_down;
+				   		up_total = delta_up + log_file_lines[lines - 1].bytes_up;
+
 				   		if (delta_down >= DELTA_TRANSFER || delta_up >= DELTA_TRANSFER || (last_bytes_down == 0 || last_bytes_up == 0)){
-				   			modify_log(log_file_lines, lines, log_file_lines[lines].timestamp, delta_down + log_file_lines[lines].bytes_down, delta_up + log_file_lines[lines].bytes_up);
-				   			
+				   			modify_log(log_file_lines, lines, log_file_lines[lines - 1].timestamp, down_total, up_total);
+
 				   			#ifdef DEBUG
 				   			writes++;
 							#endif
@@ -208,6 +239,7 @@ int run (const char *interface){
 							#endif
 				   		}
 
+				   		notification (down_total, up_total);
 				   	} else {
 				   		#ifdef DEBUG
 				   		printf ("New day (%ld).\n", timestamp);

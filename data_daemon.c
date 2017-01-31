@@ -27,24 +27,25 @@ void unlock_pid_file (){
 }
 
 void signal_handler (int sig){
+	printf ("signal received\n");
 	switch (sig){
 		case SIGHUP:
 			// todo - reload settings
 			break;
-
-		case SIGTERM:
+		case SIGINT:
+			// todo force read and write to log
 			// end server
 			unlock_pid_file();
 			closelog();
 			exit(0);
-			break;
+		break;
 	}
 }
 
 void setup_signals (){
 	// now tie signals we want to catch to the signal processing function
 	signal(SIGHUP, signal_handler);
-	signal(SIGTERM, signal_handler);
+	signal(SIGINT, signal_handler);
 	
 	// ignore these
 	signal(SIGCHLD,SIG_IGN);
@@ -152,7 +153,11 @@ static void daemonize (){
 int main (void){
 	start_log();
 
-	//daemonize();
+	#ifdef DEBUG
+	setup_signals();
+	#elif
+	daemonize();
+	#endif
 
 	syslog(LOG_INFO, "Daemon started.\n");
 

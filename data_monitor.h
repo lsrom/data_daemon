@@ -11,31 +11,43 @@
 
 #define ul_t unsigned long
 
+static unsigned short notifications_displayed = 0;
+static unsigned short notifications_ran = 0;
+/* Definitions of byte multiples. These are actually Mibi units (MiB, GiB,..) not MB, GB,.. */
+#define KILOBYTE 1024
+#define MEGABYTE (1024 * KILOBYTE)
+#define GIGABYTE (1024 * MEGABYTE)
+
+#define SECOND 1
+#define MINUTE 60 * SECOND
+#define HOUR 60 * MINUTE
+
 /* ------------------------------------------------------------------------- */
 /* SETTINGS */
 #ifdef DEBUG
-#define DELTA_TRANSFER 50 * MB 	// after how many bytes you want to write to log in debug mode
-#elif
-#define DELTA_TRANSFER 50 * MB 	// after how many bytes you want to write to log?
-#endif
-
-#ifdef DEBUG
-#define SLEEP_INTERVAL 10		// seconds between checks of transfered data in debug mode
-#elif
-#define SLEEP_INTERVAL 60		// seconds between checks of transfered data
-#endif
-
-#ifdef DEBUG
+// DEBUG MODE
+#define DELTA_TRANSFER 50 * MEGABYTE 	// after how many bytes you want to write to log in debug mode
+#define SLEEP_INTERVAL 5 * SECOND		// seconds between checks of transfered data in debug mode
 #define LOG_LOCATION "/data/git/data_daemon/test_log/"	// where to put the file with log in debug mode
+#define TRANSFER_LIMIT 1 * GIGABYTE 							// this is data limit per day
+#define TRANSFER_WARNING (	TRANSFER_LIMIT * 0.1)		// this can be either fraction of TRANSFER_LIMIT or byte amount
+#define NOTIFICATIONS_LIMIT 5			// how many times should the notifications pop up
+#define NOTIFICATIONS_PAUSE	2	// how many sleep intervals between notification pop up
+#define NOTIFICATIONS_EXCEEDED_LIMIT 5	// how many times should notification pop up when data limit is already exceeded
+#define NOTIFICATIONS_EXCEEDED_PAUSE 1	// how many sleep intervals between notification pop up when data limit is already exceeded
 #elif
+// NORMAL MODE
+#define DELTA_TRANSFER 50 * MEGABYTE 	// after how many bytes you want to write to log?
+#define SLEEP_INTERVAL MINUTE		// seconds between checks of transfered data
 #define LOG_LOCATION "/data/logs/data_transferred/"	// where to put the file with log
+#define TRANSFER_LIMIT 15 * GIGABYTE 						// this is data limit per day
+#define TRANSFER_WARNING (TRANSFER_LIMIT * 0.1)			// this can be either fraction of TRANSFER_LIMIT or byte amount
+#define NOTIFICATIONS_LIMIT 10			// how many times should the notifications pop up
+#define NOTIFICATIONS_PAUSE	3	// how many sleep intervals between notification pop up
+#define NOTIFICATIONS_EXCEEDED_LIMIT 5	// how many times should notification pop up when data limit is already exceeded
+#define NOTIFICATIONS_EXCEEDED_PAUSE 1	// how many sleep intervals between notification pop up when data limit is already exceeded
 #endif
 /* ------------------------------------------------------------------------- */
-
-/* Definitions of byte multiples. These are actually Mibi units (MiB, GiB,..) not MB, GB,.. */
-#define kB 1024
-#define MB (1024 * kB)
-#define GB (1024 * MB)
 
 /* Length of day in seconds. I don't care about days with leap seconds. */
 #define DAY 86400
@@ -87,6 +99,10 @@ void modify_log (log_line *log_file_lines, int lines, const time_t timestamp, co
  */
 bool get_current_data_file (char *buffer);
 
+/**
+ * Show notification to the user.
+ */
+void notification (const ul_t down_total, const ul_t up_total);
 
 /**
  * TODO
