@@ -6,12 +6,24 @@
 #include <time.h>
 #include <syslog.h>
 
+#define KRED  "\x1B[31m"	// red output color
+#define RESET "\x1B[0m"
+
 #define ul_t unsigned long
 
 /* ------------------------------------------------------------------------- */
 /* SETTINGS */
+#ifdef DEBUG
+#define DELTA_TRANSFER 50 * MB 	// after how many bytes you want to write to log in debug mode
+#elif
 #define DELTA_TRANSFER 50 * MB 	// after how many bytes you want to write to log?
+#endif
+
+#ifdef DEBUG
+#define SLEEP_INTERVAL 10		// seconds between checks of transfered data in debug mode
+#elif
 #define SLEEP_INTERVAL 60		// seconds between checks of transfered data
+#endif
 
 #ifdef DEBUG
 #define LOG_LOCATION "/data/git/data_daemon/test_log/"	// where to put the file with log in debug mode
@@ -33,7 +45,7 @@
 
 /* for log lines */
 typedef struct log_line {
-	ul_t timestamp;	// unix timestamp % 86400 to give the start of day
+	long int timestamp;	// unix timestamp % 86400 to give the start of day
 	ul_t bytes_down;	// how many bytes was downloaded this calendar day
 	ul_t bytes_up;		// how many bytes was uploaded this calendar day
 } log_line;

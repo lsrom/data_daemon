@@ -76,11 +76,11 @@ void modify_log (log_line *log_file_lines, int lines, const time_t timestamp, co
 
     if (lines != 0){
     	for (int i = 0; i < (lines - 1); i++){
-    		fprintf (log, "%ld,%lu,%lu\r\n", log_file_lines[i].timestamp, log_file_lines[i].bytes_down, log_file_lines[i].bytes_up);
+    		fprintf (log, "%ld,%lu,%lu\n", log_file_lines[i].timestamp, log_file_lines[i].bytes_down, log_file_lines[i].bytes_up);
     	}
     }
 
-    fprintf (log, "%ld,%lu,%lu", log_file_lines[lines].timestamp, bytes_down, bytes_up);
+    fprintf (log, "%ld,%lu,%lu", log_file_lines[lines - 1].timestamp, bytes_down, bytes_up);
 
 	fclose(log);
 }
@@ -240,7 +240,7 @@ int run (const char *interface){
 
 		#ifdef DEBUG
 		rounds++;
-		printf ("Rounds: %4d Writes: %4d\n", rounds, writes);
+		printf (KRED "Rounds: %4d Writes: %4d\n\n" RESET, rounds, writes);
 		#endif
 	}
 }
