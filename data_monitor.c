@@ -144,6 +144,22 @@ void init (){
   	gmt_offset = lt.tm_gmtoff;
 }
 
+void get_bytes_transferred (ul_t *bytes_down, ul_t *bytes_up, char *buffer){
+	char *token;	// parts of line separated by delimeter
+	   
+	token = strtok(buffer, DELIMETER);	// get the first token
+
+	char *ptr;
+	*bytes_down = strtoul(strtok(NULL, DELIMETER), &ptr, 10);	// parse bytes downloaded from dev file
+				   	
+	// jump to correct column
+	for (int i = 0; i < 7; i++){
+		strtok(NULL, DELIMETER);
+	}
+
+	*bytes_up = strtoul(strtok(NULL, DELIMETER), &ptr, 10);		// parse bytes uploaded from dev file
+}
+
 int run (const char *interface){
 	log_line log_file_lines[31];
 
@@ -154,7 +170,6 @@ int run (const char *interface){
 
 	get_current_data_file(log_data_file);
 
-	const char delimeter[2] = " ";		// delimeter for dev file
 	FILE *dev = NULL;					// /proc/net/dev on most systems
 	char buffer[255];					// buffer for reading the dev file
 	ul_t bytes_down = 0;		// how many bytes downloaded is written in dev file
@@ -185,21 +200,8 @@ int run (const char *interface){
 				if (i < 2){continue;}	// skip  first two lines, they are header
 
 				if (starts_with(&interface[0], buffer)){
-					char *token;	// parts of line separated by delimeter
-	   
-				   	token = strtok(buffer, delimeter);	// get the first token
+					get_bytes_transferred(&bytes_down, &bytes_up, buffer);
 
-				   	char *ptr;
-				   	bytes_down = strtoul(strtok(NULL, delimeter), &ptr, 10);	// parse bytes downloaded from dev file
-				   	
-				   	// jump to correct column
-				   	for (int i = 0; i < 7; i++){
-				   		strtok(NULL, delimeter);
-				   	}
-
-				   	bytes_up = strtoul(strtok(NULL, delimeter), &ptr, 10);		// parse bytes uploaded from dev file
-
-				   	//printf ("%u %u\n", bytes_down, bytes_up);		// uncomment for printing down/up amount every round
 				   	time_t timestamp = get_timestamp();
 
 				   	// calculate difference between this and last measurement

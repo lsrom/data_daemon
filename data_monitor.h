@@ -13,6 +13,8 @@
 
 static unsigned short notifications_displayed = 0;
 static unsigned short notifications_ran = 0;
+
+#define DELIMETER " "
 /* Definitions of byte multiples. These are actually Mibi units (MiB, GiB,..) not MB, GB,.. */
 #define KILOBYTE 1024
 #define MEGABYTE (1024 * KILOBYTE)
@@ -29,7 +31,7 @@ static unsigned short notifications_ran = 0;
 #define DELTA_TRANSFER 50 * MEGABYTE 	// after how many bytes you want to write to log in debug mode
 #define SLEEP_INTERVAL 5 * SECOND		// seconds between checks of transfered data in debug mode
 #define LOG_LOCATION "/data/git/data_daemon/test_log/"	// where to put the file with log in debug mode
-#define TRANSFER_LIMIT 1 * GIGABYTE 							// this is data limit per day
+static ul_t TRANSFER_LIMIT = 15 * (ul_t)GIGABYTE; 							// this is data limit per day
 #define TRANSFER_WARNING (	TRANSFER_LIMIT * 0.1)		// this can be either fraction of TRANSFER_LIMIT or byte amount
 #define NOTIFICATIONS_LIMIT 5			// how many times should the notifications pop up
 #define NOTIFICATIONS_PAUSE	2	// how many sleep intervals between notification pop up
@@ -43,13 +45,13 @@ static unsigned short notifications_ran = 0;
 #define TRANSFER_LIMIT 15 * GIGABYTE 						// this is data limit per day
 #define TRANSFER_WARNING (TRANSFER_LIMIT * 0.1)			// this can be either fraction of TRANSFER_LIMIT or byte amount
 #define NOTIFICATIONS_LIMIT 10			// how many times should the notifications pop up
-#define NOTIFICATIONS_PAUSE	3	// how many sleep intervals between notification pop up
+#define NOTIFICATIONS_PAUSE	3			// how many sleep intervals between notification pop up
 #define NOTIFICATIONS_EXCEEDED_LIMIT 5	// how many times should notification pop up when data limit is already exceeded
 #define NOTIFICATIONS_EXCEEDED_PAUSE 1	// how many sleep intervals between notification pop up when data limit is already exceeded
 #endif
 /* ------------------------------------------------------------------------- */
 
-/* Length of day in seconds. I don't care about days with leap seconds. */
+/* Length of day in seconds. */
 #define DAY 86400
 
 /* Where is virtual file 'dev' for bandwidth info. */

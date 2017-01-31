@@ -43,7 +43,7 @@ void signal_handler (int sig){
 }
 
 void setup_signals (){
-	// now tie signals we want to catch to the signal processing function
+	/*// now tie signals we want to catch to the signal processing function
 	signal(SIGHUP, signal_handler);
 	signal(SIGINT, signal_handler);
 	
@@ -51,7 +51,11 @@ void setup_signals (){
 	signal(SIGCHLD,SIG_IGN);
 	signal(SIGTSTP,SIG_IGN);
 	signal(SIGTTOU,SIG_IGN);
-	signal(SIGTTIN,SIG_IGN);
+	signal(SIGTTIN,SIG_IGN);*/
+	struct sigaction psa;
+    psa.sa_handler = signal_handler;
+    sigaction(SIGINT, &psa, NULL);
+    sigaction(SIGHUP, &psa, NULL);
 }
 
 void start_log (){
