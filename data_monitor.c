@@ -178,7 +178,7 @@ void get_bytes_transferred (ul_t *bytes_down, ul_t *bytes_up, char *buffer){
 	*bytes_up = strtoul(strtok(NULL, DELIMETER), &ptr, 10);		// parse bytes uploaded from dev file
 }
 
-int run (const char *interface){
+int run (){
 	log_line log_file_lines[31];
 
 	get_current_data_file(log_data_file);
@@ -213,7 +213,7 @@ int run (const char *interface){
 				i++;
 				if (i < 2){continue;}	// skip  first two lines, they are header
 
-				if (starts_with(&interface[0], buffer)){
+				if (starts_with(INTERFACE, buffer)){
 					get_bytes_transferred(&bytes_down, &bytes_up, buffer);
 
 				   	get_timestamp(&timestamp);

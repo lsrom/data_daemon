@@ -37,6 +37,7 @@ static ul_t TRANSFER_LIMIT = 15 * (ul_t)GIGABYTE; 							// this is data limit p
 #define NOTIFICATIONS_PAUSE	2	// how many sleep intervals between notification pop up
 #define NOTIFICATIONS_EXCEEDED_LIMIT 5	// how many times should notification pop up when data limit is already exceeded
 #define NOTIFICATIONS_EXCEEDED_PAUSE 1	// how many sleep intervals between notification pop up when data limit is already exceeded
+#define INTERFACE "wlp2s0"
 #else
 // NORMAL MODE
 #define DELTA_TRANSFER 50 * MEGABYTE 	// after how many bytes you want to write to log?
@@ -48,6 +49,7 @@ static ul_t TRANSFER_LIMIT = 15 * (ul_t)GIGABYTE; 						// this is data limit pe
 #define NOTIFICATIONS_PAUSE	3			// how many sleep intervals between notification pop up
 #define NOTIFICATIONS_EXCEEDED_LIMIT 5	// how many times should notification pop up when data limit is already exceeded
 #define NOTIFICATIONS_EXCEEDED_PAUSE 1	// how many sleep intervals between notification pop up when data limit is already exceeded
+#define INTERFACE "wlp2s0"
 #endif
 /* ------------------------------------------------------------------------- */
 
@@ -122,4 +124,4 @@ TODO
  */
 void init ();
 
-int run (const char *interface);
+int run ();

@@ -156,7 +156,7 @@ int main (void){
 
 	syslog(LOG_INFO, "Daemon started.\n");
 
-	run("wlp2s0");
+	run();
 
 	syslog(LOG_INFO, "Daemon ending.\n");
 
