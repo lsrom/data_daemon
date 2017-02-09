@@ -10,11 +10,19 @@
 #define MEGABYTE (1024 * KILOBYTE)
 #define GIGABYTE (1024 * MEGABYTE)
 
-// for log
+#define ul_t unsigned long
+
+typedef struct {
+    int year;
+    int month;
+    int day;
+} date;
+
+/* for log lines */
 typedef struct log_line {
-	unsigned long timestamp;		// unix timestamp % 86400 to give the start of day
-	unsigned long bytes_down;	// how many bytes was downloaded this calendar day
-	unsigned long bytes_up;		// how many bytes was uploaded this calendar day
+	date timestamp;		// local date
+	ul_t bytes_down;	// how many bytes was downloaded this calendar day
+	ul_t bytes_up;		// how many bytes was uploaded this calendar day
 } log_line;
 
 char read_location[255];
@@ -30,7 +38,7 @@ int read_file (){
 	FILE *file = fopen(read_location, "r");
 
 	int lines = 0;
-	while (fscanf(file, "%lu,%lu,%lu", &log_file_lines[lines].timestamp, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up) == 3) {
+	while (fscanf(file, "%d-%d-%d,%lu,%lu", &log_file_lines[lines].timestamp.year, &log_file_lines[lines].timestamp.month, &log_file_lines[lines].timestamp.day, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up) == 5) {
         lines++;
     }
 

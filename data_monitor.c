@@ -4,6 +4,22 @@
 char log_data_file[255];	// path to log file
 int gmt_offset = 0;
 
+bool is_timestamp_equal (date *d1, date *d2){
+	if (d1->year != d2->year){
+		return false;
+	}
+
+	if (d1->month != d2->month){
+		return false;
+	}
+
+	if (d1->day != d2->day){
+		return false;
+	}
+
+	return true;
+}
+
 void printMi (unsigned long bytes, char *buffer){
 	char *units[] = {"kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
 
@@ -42,7 +58,7 @@ int read_log (log_line *log_file_lines){
 	}
 
 	int lines = 0;
-	while (fscanf(log, "%ld,%lu,%lu", &log_file_lines[lines].timestamp, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up) == 3) {
+	while (fscanf(log, "%d-%d-%d,%lu,%lu", &log_file_lines[lines].timestamp.year, &log_file_lines[lines].timestamp.month, &log_file_lines[lines].timestamp.day, &log_file_lines[lines].bytes_down, &log_file_lines[lines].bytes_up) == 5) {
         lines++;
     }
 
@@ -51,29 +67,29 @@ int read_log (log_line *log_file_lines){
     return lines;
 }
 
-void add_to_log (const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines){
+void add_to_log (const date *timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines){
 	bool same = get_current_data_file(log_data_file);
 	FILE *log = fopen (log_data_file, "a");
 
 	if (lines == 0){
-		fprintf(log, "%ld,%lu,%lu", timestamp, bytes_down, bytes_up);
+		fprintf(log, "%d-%d-%d,%lu,%lu", timestamp->year, timestamp->month, timestamp->day, bytes_down, bytes_up);
 	} else {
-		fprintf(log, "\n%ld,%lu,%lu", timestamp, bytes_down, bytes_up);
+		fprintf(log, "\n%d-%d-%d,%lu,%lu", timestamp->year, timestamp->month, timestamp->day, bytes_down, bytes_up);
 	}
 
 	fclose(log);
 }
 
-void modify_log (log_line *log_file_lines, int lines, const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up){
+void modify_log (log_line *log_file_lines, int lines, const ul_t bytes_down, const ul_t bytes_up){
     FILE *log = fopen(log_data_file, "w");
 
     if (lines != 0){
     	for (int i = 0; i < (lines - 1); i++){
-    		fprintf (log, "%ld,%lu,%lu\n", log_file_lines[i].timestamp, log_file_lines[i].bytes_down, log_file_lines[i].bytes_up);
+    		fprintf (log, "%d-%d-%d,%lu,%lu\n", log_file_lines[i].timestamp.year, log_file_lines[i].timestamp.month, log_file_lines[i].timestamp.day, log_file_lines[i].bytes_down, log_file_lines[i].bytes_up);
     	}
     }
 
-    fprintf (log, "%ld,%lu,%lu", log_file_lines[lines - 1].timestamp, bytes_down, bytes_up);
+    fprintf (log, "%d-%d-%d,%lu,%lu\n", log_file_lines[lines - 1].timestamp.year, log_file_lines[lines - 1].timestamp.month, log_file_lines[lines - 1].timestamp.day, bytes_down, bytes_up);
 
 	fclose(log);
 }
@@ -97,13 +113,13 @@ bool get_current_data_file (char *buffer){
 	return same;
 }
 
-time_t get_timestamp (){
-	time_t current_time = time(NULL);
-	time_t current_date = (current_time) - (current_time % DAY) - gmt_offset;
+void get_timestamp (date *d){
+	time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
 
-	printf ("%ld\n", current_date);
-
-	return current_date;
+    d->year = tm.tm_year + 1900;
+    d->month = tm.tm_mon + 1;
+    d->day = tm.tm_mday;
 }
 
 void notification (const ul_t down_total, const ul_t up_total){
@@ -173,6 +189,7 @@ int run (const char *interface){
 	ul_t bytes_up = 0;			// how many bytes uploaded is written in dev file
 	ul_t last_bytes_up = 0;		// how many bytes were downloaded in last measurement
 	ul_t last_bytes_down = 0;	// how many bytes were uploaded in last measurement
+	date timestamp;
 
 	init(&last_bytes_down, &last_bytes_up, log_file_lines);
 
@@ -199,7 +216,7 @@ int run (const char *interface){
 				if (starts_with(&interface[0], buffer)){
 					get_bytes_transferred(&bytes_down, &bytes_up, buffer);
 
-				   	time_t timestamp = get_timestamp();
+				   	get_timestamp(&timestamp);
 
 				   	// calculate difference between this and last measurement
 				   	ul_t delta_down = bytes_down - last_bytes_down;
@@ -210,16 +227,16 @@ int run (const char *interface){
 
 				   	int lines = read_log(log_file_lines);
 
-				   	if (lines != 0 && log_file_lines[lines - 1].timestamp == timestamp){
+				   	if (lines != 0 && is_timestamp_equal(&log_file_lines[lines - 1].timestamp, &timestamp)){
 				   		#ifdef DEBUG
-				   		printf ("Same day (%ld).\n", timestamp);
+				   		printf ("Same day (%d-%d-%d).\n", timestamp.year, timestamp.month, timestamp.day);
 						#endif
 
 						down_total = delta_down + log_file_lines[lines - 1].bytes_down;
 				   		up_total = delta_up + log_file_lines[lines - 1].bytes_up;
 
 				   		if (delta_down >= DELTA_TRANSFER || delta_up >= DELTA_TRANSFER || (last_bytes_down == 0 || last_bytes_up == 0)){
-				   			modify_log(log_file_lines, lines, log_file_lines[lines - 1].timestamp, down_total, up_total);
+				   			modify_log(log_file_lines, lines, down_total, up_total);
 
 				   			#ifdef DEBUG
 				   			writes++;
@@ -241,9 +258,9 @@ int run (const char *interface){
 				   		notification (down_total, up_total);
 				   	} else {
 				   		#ifdef DEBUG
-				   		printf ("New day (%ld).\n", timestamp);
+				   		printf ("New day (%d-%d-%d).\n", timestamp.year, timestamp.month, timestamp.day);
 						#endif
-				   		add_to_log(timestamp, delta_down, delta_up, lines);
+				   		add_to_log(&timestamp, delta_down, delta_up, lines);
 				   		
 				   		#ifdef DEBUG
 				   		writes++;

@@ -148,6 +148,7 @@ int main (void){
 	start_log();
 
 	#ifdef DEBUG
+	printf("DEBUG mode.\n");
 	setup_signals();
 	#else
 	daemonize();

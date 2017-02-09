@@ -57,9 +57,15 @@ static ul_t TRANSFER_LIMIT = 15 * (ul_t)GIGABYTE; 						// this is data limit pe
 /* Where is virtual file 'dev' for bandwidth info. */
 #define NET_DEV "/proc/net/dev"
 
+typedef struct {
+    int year;
+    int month;
+    int day;
+} date;
+
 /* for log lines */
 typedef struct log_line {
-	long int timestamp;	// unix timestamp % 86400 to give the start of day
+	date timestamp;		// local date
 	ul_t bytes_down;	// how many bytes was downloaded this calendar day
 	ul_t bytes_up;		// how many bytes was uploaded this calendar day
 } log_line;
@@ -89,12 +95,12 @@ int read_log (log_line *log_file_lines);
  * regardless whether it is after midnight during the run of the program or after boot and new start of the program.
  * This means that downloaded and upload data amount will be always cunted for one calendar day.
  */
-void add_to_log (const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines);
+void add_to_log (const date *timestamp, const ul_t bytes_down, const ul_t bytes_up, const int lines);
 
 /**
  * Changes last line if log file. No new line is added. Is called during the day, logging changing values.
  */
-void modify_log (log_line *log_file_lines, int lines, const time_t timestamp, const ul_t bytes_down, const ul_t bytes_up);
+void modify_log (log_line *log_file_lines, int lines, const ul_t bytes_down, const ul_t bytes_up);
 
 /**
  * Creates absolute location of the log file and puts it into @buffer.
@@ -109,7 +115,7 @@ void notification (const ul_t down_total, const ul_t up_total);
 /**
  * TODO
  */
-time_t get_timestamp();
+void get_timestamp(date *d);
 
 /**
 TODO
