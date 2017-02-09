@@ -99,7 +99,9 @@ bool get_current_data_file (char *buffer){
 
 time_t get_timestamp (){
 	time_t current_time = time(NULL);
-	time_t current_date = (current_time + gmt_offset) - (current_time % DAY);
+	time_t current_date = (current_time) - (current_time % DAY) - gmt_offset;
+
+	printf ("%ld\n", current_date);
 
 	return current_date;
 }
@@ -162,11 +164,6 @@ void get_bytes_transferred (ul_t *bytes_down, ul_t *bytes_up, char *buffer){
 
 int run (const char *interface){
 	log_line log_file_lines[31];
-
-	/*if (argc <= 1){
-		printf ("Too few arguments.\n");
-		exit(1);
-	}*/
 
 	get_current_data_file(log_data_file);
 

@@ -29,7 +29,7 @@ static unsigned short notifications_ran = 0;
 #ifdef DEBUG
 // DEBUG MODE
 #define DELTA_TRANSFER 50 * MEGABYTE 	// after how many bytes you want to write to log in debug mode
-#define SLEEP_INTERVAL 5 * SECOND		// seconds between checks of transfered data in debug mode
+#define SLEEP_INTERVAL MINUTE		// seconds between checks of transfered data in debug mode
 #define LOG_LOCATION "/data/git/data_daemon/test_log/"	// where to put the file with log in debug mode
 static ul_t TRANSFER_LIMIT = 15 * (ul_t)GIGABYTE; 							// this is data limit per day
 #define TRANSFER_WARNING (	TRANSFER_LIMIT * 0.1)		// this can be either fraction of TRANSFER_LIMIT or byte amount
@@ -37,12 +37,12 @@ static ul_t TRANSFER_LIMIT = 15 * (ul_t)GIGABYTE; 							// this is data limit p
 #define NOTIFICATIONS_PAUSE	2	// how many sleep intervals between notification pop up
 #define NOTIFICATIONS_EXCEEDED_LIMIT 5	// how many times should notification pop up when data limit is already exceeded
 #define NOTIFICATIONS_EXCEEDED_PAUSE 1	// how many sleep intervals between notification pop up when data limit is already exceeded
-#elif
+#else
 // NORMAL MODE
 #define DELTA_TRANSFER 50 * MEGABYTE 	// after how many bytes you want to write to log?
 #define SLEEP_INTERVAL MINUTE		// seconds between checks of transfered data
 #define LOG_LOCATION "/data/logs/data_transferred/"	// where to put the file with log
-#define TRANSFER_LIMIT 15 * GIGABYTE 						// this is data limit per day
+static ul_t TRANSFER_LIMIT = 15 * (ul_t)GIGABYTE; 						// this is data limit per day
 #define TRANSFER_WARNING (TRANSFER_LIMIT * 0.1)			// this can be either fraction of TRANSFER_LIMIT or byte amount
 #define NOTIFICATIONS_LIMIT 10			// how many times should the notifications pop up
 #define NOTIFICATIONS_PAUSE	3			// how many sleep intervals between notification pop up

@@ -27,7 +27,6 @@ void unlock_pid_file (){
 }
 
 void signal_handler (int sig){
-	printf ("signal received\n");
 	switch (sig){
 		case SIGHUP:
 			// todo - reload settings
@@ -43,15 +42,6 @@ void signal_handler (int sig){
 }
 
 void setup_signals (){
-	/*// now tie signals we want to catch to the signal processing function
-	signal(SIGHUP, signal_handler);
-	signal(SIGINT, signal_handler);
-	
-	// ignore these
-	signal(SIGCHLD,SIG_IGN);
-	signal(SIGTSTP,SIG_IGN);
-	signal(SIGTTOU,SIG_IGN);
-	signal(SIGTTIN,SIG_IGN);*/
 	struct sigaction psa;
     psa.sa_handler = signal_handler;
     sigaction(SIGINT, &psa, NULL);
@@ -159,7 +149,7 @@ int main (void){
 
 	#ifdef DEBUG
 	setup_signals();
-	#elif
+	#else
 	daemonize();
 	#endif
 
